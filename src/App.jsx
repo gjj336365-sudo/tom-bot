@@ -8,6 +8,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('farm');
   const [mode, setMode] = useState(() => localStorage.getItem('tom_bot_mode') || 'Ranked');
   const [timer, setTimer] = useState('15m');
+  
+  // حالة نافذة الإحصائيات
   const [showStats, setShowStats] = useState(false);
   
   // شروط تفعيل النافذة العائمة
@@ -75,14 +77,14 @@ export default function App() {
   const openAccessibility = async () => {
     try { 
       await TomBot.openAccessibilitySettings(); 
-      setAccessEnabled(true); // تعليم إنه تفعل
+      setAccessEnabled(true); 
     } catch (error) { alert(error.message); }
   };
 
   const requestCapture = async () => {
     try { 
       await TomBot.requestScreenCapture(); 
-      setCaptureEnabled(true); // تعليم إنه تفعل
+      setCaptureEnabled(true); 
     } catch (error) { alert(error.message); }
   };
 
@@ -171,7 +173,6 @@ export default function App() {
                 <input type="text" value={timer} onChange={(e) => setTimer(e.target.value)} className="bg-[#16181F] px-4 py-2 rounded-full font-bold text-center w-24 outline-none text-white" />
               </div>
 
-              {/* زر الإحصائيات - شغال طبيعي */}
               <div onClick={() => setShowStats(true)} className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
                 <div className="flex items-center gap-4"><BarChart2 className="w-6 h-6" /><span className="text-lg">Statistics</span></div>
                 <ChevronRight className="w-5 h-5" />
@@ -216,10 +217,10 @@ export default function App() {
         </div>
       </div>
 
-      {/* نافذة الإحصائيات (رجعناها مثل أول) */}
+      {/* نافذة الإحصائيات */}
       {showStats && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#0A1A13] border-2 border-[#00FF41] rounded-2xl w-full max-w-[320px] p-4 relative">
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-[#0A1A13] border-2 border-[#00FF41] rounded-2xl w-full max-w-[320px] p-4 relative shadow-2xl">
             <h2 className="text-2xl font-bold text-center mb-4">Farm Stats</h2>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-6">
               {farmItems.map((item, index) => (
@@ -234,18 +235,23 @@ export default function App() {
         </div>
       )}
 
-      {/* النافذة العائمة الشفافة 35x35 (تطلع بس إذا الصلاحيتين مفعله) */}
+      {/* النافذة العائمة الشفافة 35x35 (مربع) */}
       {accessEnabled && captureEnabled && (
         <div
-          style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, touchAction: 'none', width: '35px', height: '35px' }}
+          style={{ 
+            transform: `translate(${pos.x}px, ${pos.y}px)`, 
+            touchAction: 'none', 
+            width: '35px', 
+            height: '35px' 
+          }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className={`absolute top-1/2 left-1/2 -ml-4 -mt-4 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing shadow-2xl z-50 border transition-all duration-300 ${
+          className={`absolute top-1/2 left-1/2 -ml-[17.5px] -mt-[17.5px] rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing z-[90] border transition-all duration-300 ${
             isBotRunning 
-              ? 'bg-red-600/80 border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.8)] backdrop-blur-sm' 
-              : 'bg-black/30 backdrop-blur-md border-[#00FF41] shadow-[0_0_15px_rgba(0,255,65,0.5)]'
+              ? 'bg-red-600/60 border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.6)] backdrop-blur-sm' 
+              : 'bg-white/10 border-[#00FF41]/50 shadow-[0_0_15px_rgba(0,255,65,0.3)] backdrop-blur-sm'
           }`}
         >
            {isBotRunning ? (
