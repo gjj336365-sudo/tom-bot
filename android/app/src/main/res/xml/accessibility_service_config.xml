@@ -5,5 +5,5 @@
     android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows|flagReportViewIds"
     android:canPerformGestures="true"
     android:canRetrieveWindowContent="true"
-    android:description="TOM bot service for tapping and reading screen."
+    android:description="@string/accessibility_desc"
     android:notificationTimeout="100" />

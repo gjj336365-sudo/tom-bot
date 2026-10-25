@@ -4,4 +4,5 @@
     <string name="title_activity_main">TOM bot</string>
     <string name="package_name">com.tombot.app</string>
     <string name="custom_url_scheme">com.tombot.app</string>
+<string name="accessibility_desc">TOM bot service for tapping and reading screen.</string>
 </resources>
