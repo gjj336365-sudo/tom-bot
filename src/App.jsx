@@ -9,8 +9,10 @@ export default function App() {
   const [mode, setMode] = useState(() => localStorage.getItem('tom_bot_mode') || 'Ranked');
   const [timer, setTimer] = useState('15m');
   const [showStats, setShowStats] = useState(false);
-  const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   
+  // شروط تفعيل النافذة العائمة
+  const [accessEnabled, setAccessEnabled] = useState(false);
+  const [captureEnabled, setCaptureEnabled] = useState(false);
   const [isBotRunning, setIsBotRunning] = useState(false);
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -66,16 +68,22 @@ export default function App() {
       await TomBot.performClick({ x: 500, y: 500 });
       alert('تم إرسال أمر الضغط بنجاح!');
     } catch (error) {
-      alert('خطأ: تأكد إنك مفعل صلاحية اللمس. (' + error.message + ')');
+      alert('خطأ: ' + error.message);
     }
   };
 
   const openAccessibility = async () => {
-    try { await TomBot.openAccessibilitySettings(); } catch (error) { alert(error.message); }
+    try { 
+      await TomBot.openAccessibilitySettings(); 
+      setAccessEnabled(true); // تعليم إنه تفعل
+    } catch (error) { alert(error.message); }
   };
 
   const requestCapture = async () => {
-    try { await TomBot.requestScreenCapture(); } catch (error) { alert(error.message); }
+    try { 
+      await TomBot.requestScreenCapture(); 
+      setCaptureEnabled(true); // تعليم إنه تفعل
+    } catch (error) { alert(error.message); }
   };
 
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -87,11 +95,6 @@ export default function App() {
     const newMode = mode === 'Ranked' ? 'Bloody soon' : 'Ranked';
     setMode(newMode);
     localStorage.setItem('tom_bot_mode', newMode);
-  };
-
-  const handleCloseStats = () => {
-    setShowStats(false);
-    setShowFloatingMenu(true);
   };
 
   const handlePointerDown = (e) => {
@@ -168,6 +171,7 @@ export default function App() {
                 <input type="text" value={timer} onChange={(e) => setTimer(e.target.value)} className="bg-[#16181F] px-4 py-2 rounded-full font-bold text-center w-24 outline-none text-white" />
               </div>
 
+              {/* زر الإحصائيات - شغال طبيعي */}
               <div onClick={() => setShowStats(true)} className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
                 <div className="flex items-center gap-4"><BarChart2 className="w-6 h-6" /><span className="text-lg">Statistics</span></div>
                 <ChevronRight className="w-5 h-5" />
@@ -212,6 +216,7 @@ export default function App() {
         </div>
       </div>
 
+      {/* نافذة الإحصائيات (رجعناها مثل أول) */}
       {showStats && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-[#0A1A13] border-2 border-[#00FF41] rounded-2xl w-full max-w-[320px] p-4 relative">
@@ -224,29 +229,29 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <button onClick={handleCloseStats} className="w-full bg-[#E5E7EB] text-black font-bold text-lg py-2 rounded-lg">Close</button>
+            <button onClick={() => setShowStats(false)} className="w-full bg-[#E5E7EB] text-black font-bold text-lg py-2 rounded-lg">Close</button>
           </div>
         </div>
       )}
 
-      {/* المربع العائم الجديد (زر التشغيل والإطفاء) */}
-      {showFloatingMenu && (
+      {/* النافذة العائمة الشفافة 35x35 (تطلع بس إذا الصلاحيتين مفعله) */}
+      {accessEnabled && captureEnabled && (
         <div
-          style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, touchAction: 'none', width: '64px', height: '64px' }}
+          style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, touchAction: 'none', width: '35px', height: '35px' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className={`absolute top-1/2 left-1/2 -ml-8 -mt-8 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-2xl z-50 border transition-all duration-300 ${
+          className={`absolute top-1/2 left-1/2 -ml-4 -mt-4 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing shadow-2xl z-50 border transition-all duration-300 ${
             isBotRunning 
-              ? 'bg-red-600 border-red-500 shadow-[0_0_20px_rgba(255,0,0,0.6)]' 
-              : 'bg-black/40 backdrop-blur-md border-[#00FF41] shadow-[0_0_20px_rgba(0,255,65,0.4)]'
+              ? 'bg-red-600/80 border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.8)] backdrop-blur-sm' 
+              : 'bg-black/30 backdrop-blur-md border-[#00FF41] shadow-[0_0_15px_rgba(0,255,65,0.5)]'
           }`}
         >
            {isBotRunning ? (
-             <Square className="w-7 h-7 text-white fill-white" />
+             <Square className="w-4 h-4 text-white fill-white" />
            ) : (
-             <Play className="w-8 h-8 text-[#00FF41] fill-[#00FF41] ml-1" />
+             <Play className="w-4 h-4 text-[#00FF41] fill-[#00FF41] ml-0.5" />
            )}
         </div>
       )}
