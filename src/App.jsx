@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Swords, Clock, BarChart2, Key, ChevronRight, Play, LogOut } from 'lucide-react';
+import { Swords, Clock, BarChart2, Key, ChevronRight, Play, LogOut, ShieldCheck, Eye, Square } from 'lucide-react';
 import { registerPlugin } from '@capacitor/core';
 
-// ربط واجهة الويب مع كود الجافا
 const TomBot = registerPlugin('TomBot');
 
 export default function App() {
@@ -11,8 +10,9 @@ export default function App() {
   const [timer, setTimer] = useState('15m');
   const [showStats, setShowStats] = useState(false);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
+  
+  const [isBotRunning, setIsBotRunning] = useState(false);
 
-  // --- نظام الحماية والمفتاح ---
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const expiry = localStorage.getItem('tom_bot_expiry');
     return expiry && parseInt(expiry) > Date.now();
@@ -61,15 +61,21 @@ export default function App() {
     setIsAuthenticated(false);
   };
 
-  // دالة تجربة زر Start (ترسل أمر ضغط للجافا)
   const handleStartBot = async () => {
     try {
-      // نجرب نرسل أمر ضغط على إحداثيات معينة (مثلاً x=500, y=500)
       await TomBot.performClick({ x: 500, y: 500 });
       alert('تم إرسال أمر الضغط بنجاح!');
     } catch (error) {
-      alert('خطأ: تأكد إنك مشغل التطبيق كـ APK ومفعل صلاحية اللمس. (' + error.message + ')');
+      alert('خطأ: تأكد إنك مفعل صلاحية اللمس. (' + error.message + ')');
     }
+  };
+
+  const openAccessibility = async () => {
+    try { await TomBot.openAccessibilitySettings(); } catch (error) { alert(error.message); }
+  };
+
+  const requestCapture = async () => {
+    try { await TomBot.requestScreenCapture(); } catch (error) { alert(error.message); }
   };
 
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -105,9 +111,17 @@ export default function App() {
     setDragging(false);
     const distance = Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y);
     if (distance < 10) {
-      setShowFloatingMenu(false);
-      setShowStats(true);
+      toggleBot();
     }
+  };
+
+  const toggleBot = async () => {
+    const newState = !isBotRunning;
+    setIsBotRunning(newState);
+    try {
+      if (newState) { await TomBot.startBot(); } 
+      else { await TomBot.stopBot(); }
+    } catch (error) { console.log(error); }
   };
 
   const farmItems = [
@@ -123,22 +137,11 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0A0B0E] text-white flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-[#0A0B0E] text-white flex flex-col items-center justify-center p-6 font-sans">
         <div className="w-full max-w-sm flex flex-col items-center">
-            <h1 className="text-5xl font-extrabold mb-12 tracking-wide text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">TOM bot</h1>
-            <input
-              type="text"
-              placeholder="Enter Key"
-              value={inputKey}
-              onChange={(e) => setInputKey(e.target.value)}
-              className="w-full bg-[#1A1D24] border border-gray-600 rounded-2xl px-6 py-4 text-center text-xl outline-none focus:border-[#00FF41] transition-colors mb-6"
-            />
-            <button
-              onClick={handleLogin}
-              className="w-full bg-[#0A2C1B] border border-[#00FF41] text-white font-bold text-xl py-4 rounded-2xl active:scale-95 transition-transform shadow-[0_0_15px_rgba(0,255,65,0.2)]"
-            >
-              Enter
-            </button>
+            <h1 className="text-5xl font-extrabold mb-12 tracking-wide text-white">TOM bot</h1>
+            <input type="text" placeholder="Enter Key" value={inputKey} onChange={(e) => setInputKey(e.target.value)} className="w-full bg-[#1A1D24] border border-gray-600 rounded-2xl px-6 py-4 text-center text-xl outline-none focus:border-[#00FF41] mb-6" />
+            <button onClick={handleLogin} className="w-full bg-[#0A2C1B] border border-[#00FF41] text-white font-bold text-xl py-4 rounded-2xl">Enter</button>
         </div>
       </div>
     );
@@ -150,69 +153,52 @@ export default function App() {
         {activeTab === 'farm' ? (
           <div className="flex flex-col items-center">
             <h1 className="text-4xl font-extrabold mb-12 tracking-wide">TOM bot</h1>
-            <div className="w-full space-y-5 max-w-md">
+            <div className="w-full space-y-4 max-w-md">
               
-              <div onClick={handleModeClick} className="flex items-center justify-between bg-[#232733] h-[75px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
-                <div className="flex items-center gap-4">
-                  <Swords className="w-6 h-6" />
-                  <span className="text-lg">Mode</span>
-                </div>
+              <div onClick={handleModeClick} className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
+                <div className="flex items-center gap-4"><Swords className="w-6 h-6" /><span className="text-lg">Mode</span></div>
                 <div className="flex items-center gap-2">
-                  <div className={`px-4 py-2 rounded-full font-bold text-center ${mode === 'Bloody soon' ? 'bg-red-900/50 text-red-200 min-w-[120px]' : 'bg-[#16181F] min-w-[100px]'}`}>
-                    {mode}
-                  </div>
+                  <div className={`px-4 py-2 rounded-full font-bold text-center ${mode === 'Bloody soon' ? 'bg-red-900/50 text-red-200 min-w-[120px]' : 'bg-[#16181F] min-w-[100px]'}`}>{mode}</div>
                   <ChevronRight className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between bg-[#232733] h-[75px] rounded-full px-6">
-                <div className="flex items-center gap-4">
-                  <Clock className="w-6 h-6" />
-                  <span className="text-lg">Timer</span>
-                </div>
-                <input
-                  type="text"
-                  value={timer}
-                  onChange={(e) => setTimer(e.target.value)}
-                  className="bg-[#16181F] px-4 py-2 rounded-full font-bold text-center w-24 outline-none text-white border border-transparent focus:border-gray-500 transition-colors"
-                  placeholder="15m"
-                />
+              <div className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6">
+                <div className="flex items-center gap-4"><Clock className="w-6 h-6" /><span className="text-lg">Timer</span></div>
+                <input type="text" value={timer} onChange={(e) => setTimer(e.target.value)} className="bg-[#16181F] px-4 py-2 rounded-full font-bold text-center w-24 outline-none text-white" />
               </div>
 
-              <div onClick={() => setShowStats(true)} className="flex items-center justify-between bg-[#232733] h-[75px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
-                <div className="flex items-center gap-4">
-                  <BarChart2 className="w-6 h-6" />
-                  <span className="text-lg">Statistics</span>
-                </div>
+              <div onClick={() => setShowStats(true)} className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
+                <div className="flex items-center gap-4"><BarChart2 className="w-6 h-6" /><span className="text-lg">Statistics</span></div>
                 <ChevronRight className="w-5 h-5" />
               </div>
 
-              {/* زر Start اللي يرسل الأمر للجافا */}
-              <div onClick={handleStartBot} className="flex items-center justify-center bg-[#0A2C1B] border border-[#00FF41] h-[75px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform mt-4 relative shadow-[0_0_15px_rgba(0,255,65,0.2)]">
-                <div className="absolute left-3 w-14 h-14 bg-[#122E1F] rounded-full flex items-center justify-center">
-                  <Play className="w-6 h-6 text-[#00FF41] fill-[#00FF41] ml-1" />
-                </div>
-                <span className="text-2xl font-bold text-white w-full text-center tracking-wide">Start</span>
+              <div onClick={openAccessibility} className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
+                <div className="flex items-center gap-4"><ShieldCheck className="w-6 h-6 text-[#00FF41]" /><span className="text-lg">Accessibility</span></div>
+                <ChevronRight className="w-5 h-5" />
               </div>
 
+              <div onClick={requestCapture} className="flex items-center justify-between bg-[#232733] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform">
+                <div className="flex items-center gap-4"><Eye className="w-6 h-6 text-[#00FF41]" /><span className="text-lg">Screen Capture</span></div>
+                <ChevronRight className="w-5 h-5" />
+              </div>
+
+              <div onClick={handleStartBot} className="flex items-center justify-center bg-[#0A2C1B] border border-[#00FF41] h-[65px] rounded-full px-6 cursor-pointer active:scale-95 transition-transform mt-2 relative">
+                <div className="absolute left-3 w-12 h-12 bg-[#122E1F] rounded-full flex items-center justify-center"><Play className="w-5 h-5 text-[#00FF41] fill-[#00FF41] ml-1" /></div>
+                <span className="text-2xl font-bold text-white w-full text-center tracking-wide">Start</span>
+              </div>
             </div>
           </div>
         ) : (
           <div className="flex flex-col max-w-md mx-auto w-full relative">
             <div className="flex justify-between items-center mb-16">
                 <h1 className="text-4xl font-extrabold">TOM bot</h1>
-                <button onClick={handleLogout} className="bg-red-900/30 p-3 rounded-full hover:bg-red-900/60 transition-colors">
-                    <LogOut className="w-5 h-5 text-red-400" />
-                </button>
+                <button onClick={handleLogout} className="bg-red-900/30 p-3 rounded-full"><LogOut className="w-5 h-5 text-red-400" /></button>
             </div>
-            
             <p className="text-center text-xl text-gray-300 mb-8">Welcome</p>
-            
-            <div className="flex items-center bg-[#232733] h-[75px] rounded-full px-6 cursor-pointer">
-              <Key className="w-6 h-6 text-[#00FF41]" />
-              <div className="w-[1px] h-8 bg-gray-500 mx-4"></div>
-              <span className="text-lg">Key time</span>
-              <span className="mr-auto text-lg font-bold text-[#00FF41]">{timeLeft}</span>
+            <div className="flex items-center bg-[#232733] h-[75px] rounded-full px-6">
+              <Key className="w-6 h-6 text-[#00FF41]" /><div className="w-[1px] h-8 bg-gray-500 mx-4"></div>
+              <span className="text-lg">Key time</span><span className="mr-auto text-lg font-bold text-[#00FF41]">{timeLeft}</span>
             </div>
           </div>
         )}
@@ -220,15 +206,15 @@ export default function App() {
 
       <div className="p-6">
         <div className="flex items-center bg-[#232733] h-[65px] rounded-full max-w-md mx-auto">
-          <button onClick={() => setActiveTab('farm')} className={`flex-1 text-center text-lg transition-colors ${activeTab === 'farm' ? 'font-bold text-white' : 'text-gray-400'}`}>Farm</button>
+          <button onClick={() => setActiveTab('farm')} className={`flex-1 text-center text-lg ${activeTab === 'farm' ? 'font-bold text-white' : 'text-gray-400'}`}>Farm</button>
           <div className="w-[1px] h-8 bg-gray-600"></div>
-          <button onClick={() => setActiveTab('home')} className={`flex-1 text-center text-lg transition-colors ${activeTab === 'home' ? 'font-bold text-white' : 'text-gray-400'}`}>Home</button>
+          <button onClick={() => setActiveTab('home')} className={`flex-1 text-center text-lg ${activeTab === 'home' ? 'font-bold text-white' : 'text-gray-400'}`}>Home</button>
         </div>
       </div>
 
       {showStats && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#0A1A13] border-2 border-[#00FF41] rounded-2xl w-full max-w-[320px] p-4 relative shadow-[0_0_30px_rgba(0,255,65,0.2)]">
+          <div className="bg-[#0A1A13] border-2 border-[#00FF41] rounded-2xl w-full max-w-[320px] p-4 relative">
             <h2 className="text-2xl font-bold text-center mb-4">Farm Stats</h2>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-6">
               {farmItems.map((item, index) => (
@@ -238,30 +224,30 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <button onClick={handleCloseStats} className="w-full bg-[#E5E7EB] text-black font-bold text-lg py-2 rounded-lg active:bg-gray-400 transition-colors">
-              Close
-            </button>
+            <button onClick={handleCloseStats} className="w-full bg-[#E5E7EB] text-black font-bold text-lg py-2 rounded-lg">Close</button>
           </div>
         </div>
       )}
 
+      {/* المربع العائم الجديد (زر التشغيل والإطفاء) */}
       {showFloatingMenu && (
         <div
-          style={{ 
-            transform: `translate(${pos.x}px, ${pos.y}px)`, 
-            touchAction: 'none',
-            width: '64px',
-            height: '64px'
-          }}
+          style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, touchAction: 'none', width: '64px', height: '64px' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className="absolute top-1/2 left-1/2 -ml-8 -mt-8 bg-[#F0F2F5] rounded-xl flex flex-col items-center justify-center gap-1.5 cursor-grab active:cursor-grabbing shadow-2xl z-50 border border-gray-300 opacity-90 hover:opacity-100 transition-opacity"
+          className={`absolute top-1/2 left-1/2 -ml-8 -mt-8 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-2xl z-50 border transition-all duration-300 ${
+            isBotRunning 
+              ? 'bg-red-600 border-red-500 shadow-[0_0_20px_rgba(255,0,0,0.6)]' 
+              : 'bg-black/40 backdrop-blur-md border-[#00FF41] shadow-[0_0_20px_rgba(0,255,65,0.4)]'
+          }`}
         >
-           <div className="w-8 h-1.5 bg-[#2A2E39] rounded-full"></div>
-           <div className="w-8 h-1.5 bg-[#2A2E39] rounded-full"></div>
-           <div className="w-8 h-1.5 bg-[#2A2E39] rounded-full"></div>
+           {isBotRunning ? (
+             <Square className="w-7 h-7 text-white fill-white" />
+           ) : (
+             <Play className="w-8 h-8 text-[#00FF41] fill-[#00FF41] ml-1" />
+           )}
         </div>
       )}
     </div>
