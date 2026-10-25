@@ -8,13 +8,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('farm');
   const [mode, setMode] = useState(() => localStorage.getItem('tom_bot_mode') || 'Ranked');
   const [timer, setTimer] = useState('15m');
-  
-  // حالة نافذة الإحصائيات
   const [showStats, setShowStats] = useState(false);
   
-  // شروط تفعيل النافذة العائمة
-  const [accessEnabled, setAccessEnabled] = useState(false);
-  const [captureEnabled, setCaptureEnabled] = useState(false);
+  // إرجاع حالة النافذة العائمة
+  const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [isBotRunning, setIsBotRunning] = useState(false);
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -75,17 +72,11 @@ export default function App() {
   };
 
   const openAccessibility = async () => {
-    try { 
-      await TomBot.openAccessibilitySettings(); 
-      setAccessEnabled(true); 
-    } catch (error) { alert(error.message); }
+    try { await TomBot.openAccessibilitySettings(); } catch (error) { alert(error.message); }
   };
 
   const requestCapture = async () => {
-    try { 
-      await TomBot.requestScreenCapture(); 
-      setCaptureEnabled(true); 
-    } catch (error) { alert(error.message); }
+    try { await TomBot.requestScreenCapture(); } catch (error) { alert(error.message); }
   };
 
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -97,6 +88,12 @@ export default function App() {
     const newMode = mode === 'Ranked' ? 'Bloody soon' : 'Ranked';
     setMode(newMode);
     localStorage.setItem('tom_bot_mode', newMode);
+  };
+
+  // زر إغلاق الإحصائيات يظهر النافذة العائمة
+  const handleCloseStats = () => {
+    setShowStats(false);
+    setShowFloatingMenu(true);
   };
 
   const handlePointerDown = (e) => {
@@ -230,34 +227,34 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowStats(false)} className="w-full bg-[#E5E7EB] text-black font-bold text-lg py-2 rounded-lg">Close</button>
+            <button onClick={handleCloseStats} className="w-full bg-[#E5E7EB] text-black font-bold text-lg py-2 rounded-lg">Close</button>
           </div>
         </div>
       )}
 
-      {/* النافذة العائمة الشفافة 35x35 (مربع) */}
-      {accessEnabled && captureEnabled && (
+      {/* النافذة العائمة المربعة الجديدة (بدون شفافية عشان ما تصير ثقيلة) */}
+      {showFloatingMenu && (
         <div
           style={{ 
             transform: `translate(${pos.x}px, ${pos.y}px)`, 
             touchAction: 'none', 
-            width: '35px', 
-            height: '35px' 
+            width: '45px', 
+            height: '45px' 
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className={`absolute top-1/2 left-1/2 -ml-[17.5px] -mt-[17.5px] rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing z-[90] border transition-all duration-300 ${
+          className={`absolute top-1/2 left-1/2 -ml-[22.5px] -mt-[22.5px] rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing z-[90] border ${
             isBotRunning 
-              ? 'bg-red-600/60 border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.6)] backdrop-blur-sm' 
-              : 'bg-white/10 border-[#00FF41]/50 shadow-[0_0_15px_rgba(0,255,65,0.3)] backdrop-blur-sm'
+              ? 'bg-[#0A0B0E] border-red-500/50' 
+              : 'bg-[#0A0B0E] border-green-500/50'
           }`}
         >
            {isBotRunning ? (
-             <Square className="w-4 h-4 text-white fill-white" />
+             <Square className="w-5 h-5 text-red-500 fill-red-500" />
            ) : (
-             <Play className="w-4 h-4 text-[#00FF41] fill-[#00FF41] ml-0.5" />
+             <Play className="w-5 h-5 text-[#00FF41] fill-[#00FF41] ml-1" />
            )}
         </div>
       )}
